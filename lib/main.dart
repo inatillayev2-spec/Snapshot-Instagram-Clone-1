@@ -1,47 +1,141 @@
-import 'package:Snapshot/info.dart';
-import 'package:Snapshot/userauth/LoginSignup.dart';
-import 'package:Snapshot/userauth/socialAuth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'home.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // after upgrading flutter this is now necessary
-
-  // to enable timestamps in firebase
-  Firestore.instance.settings().then((_) {
-    print('[Main] Firestore timestamps in snapshots set');
-  }, onError: (_) => print('[Main] Error setting timestamps in snapshots'));
-  runApp(MyApp());
+void main() {
+  runApp(const MySocialApp());
 }
 
-class MyApp extends StatelessWidget {
+class MySocialApp extends StatelessWidget {
+  const MySocialApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Snapshot',
+      debugShowCheckedModeBanner: false,
+      title: 'MySocial',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        buttonColor: Colors.pink,
-        primaryColor: Colors.blue,
-        // accentColor: Colors.white,
-        // primaryIconTheme: IconThemeData(color: Colors.black),
+        useMaterial3: true,
+        colorSchemeSeed: Colors.pink,
       ),
-      home: HomePage(title: 'Snapshot'),
-      routes: {
-        HomePage.id: (context) => HomePage(),
-        // WelcomeScreen.id: (context) => WelcomeScreen(),
-        // LoginPage.id: (context) => LoginPage(),
-        // SignUpPage.id: (context) => SignUpPage(),
-        // Home.id: (context) => Home(),
-        LoginSignup.id: (context) => LoginSignup(),
-        Info.id: (context) => Info(),
-        // CreateAccount.id: (context) => CreateAccount(),
-        // Search.id: (context) => Search(),
-        // Upload.id: (context) => Upload(),
-      },
+      home: const MainScreen(),
     );
   }
 }
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int page = 0;
+
+  final List<String> posts = [
+    'https://picsum.photos/id/1011/700/700',
+    'https://picsum.photos/id/1015/700/700',
+    'https://picsum.photos/id/1025/700/700',
+  ];
+
+  final List<bool> liked = [false, false, false];
+
+  void addPost() {
+    setState(() {
+      posts.insert(
+        0,
+        'https://picsum.photos/id/${30 + posts.length}/700/700',
+      );
+      liked.insert(0, false);
+      page = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screens = [
+      HomePage(
+        posts: posts,
+        liked: liked,
+        onLike: (index) {
+          setState(() {
+            liked[index] = !liked[index];
+          });
+        },
+      ),
+      const ReelsPage(),
+      const SearchPage(),
+      const ProfilePage(),
+    ];
+
+    return Scaffold(
+      body: screens[page],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: page,
+        onDestinationSelected: (index) {
+          if (index == 2) {
+            showModalBottomSheet(
+              context: context,
+              builder: (context) {
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.photo),
+                        title: const Text('Rasm joylash'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          addPost();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.video_library),
+                        title: const Text('Reels joylash'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Reels yuklash keyingi bosqichda qo‘shiladi',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else if (index == 3) {
+            setState(() {
+              page = 2;
+            });
+          } else if (index == 4) {
+            setState(() {
+              page = 3;
+            });
+          } else {
+            setState(() {
+              page = index;
+            });
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.video_library_outlined),
+            selectedIcon: Icon(Icons.video_library),
+            label: 'Reels',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_box_outlined),
+            selectedIcon: Icon(Icons.add_box),
+            label: 'Post',
+          ),
+          NavigationDestination(
+            icon: Icon
